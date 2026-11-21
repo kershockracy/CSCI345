@@ -2,6 +2,8 @@
 import java.net.Socket;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 public class Client {
     public static void main(String[] args) {
@@ -16,6 +18,15 @@ public class Client {
                     socket.getOutputStream(), true);
 
             output.println("Hello from Client!");
+            // Prepare the client to receive the server's reply.
+            BufferedReader input = new BufferedReader(
+                    new InputStreamReader(socket.getInputStream()));
+
+            // Read the message from the server.
+            String reply = input.readLine();
+
+            // Display the server's reply.
+            System.out.println("Server says: " + reply);
 
         } catch (IOException e) {
             System.out.println("Connection failed: " + e.getMessage());

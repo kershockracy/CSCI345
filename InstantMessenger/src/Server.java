@@ -4,6 +4,7 @@ import java.net.Socket;
 import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 
 public class Server {
     public static void main(String[] args) {
@@ -25,6 +26,12 @@ public class Server {
                 String message = input.readLine();
 
                 System.out.println("Message received: " + message);
+                // Prepare the server to send a reply to the client.
+                PrintWriter output = new PrintWriter(
+                        client.getOutputStream(), true);
+
+                // Send a reply through the TCP connection.
+                output.println("Server received your message!");
 
                 client.close();
             }
