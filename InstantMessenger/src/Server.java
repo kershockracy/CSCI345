@@ -66,6 +66,33 @@ public class Server {
             }
 
             username = username.trim();
+            /*
+             * Read the password sent by the client.
+             *
+             * For this school project, we are using two
+             * predefined users with the same test password.
+             *
+             * Alice: username = alice, password = 1234
+             * Bob: username = bob, password = 1234
+             */
+            String password = input.readLine();
+
+            // Check whether the username is one of our two accounts.
+            boolean validUsername = username.equals("alice")
+                    || username.equals("bob");
+
+            // Check whether the password is correct.
+            boolean validPassword = "1234".equals(password);
+
+            // Reject the connection if either value is incorrect.
+            if (!validUsername || !validPassword) {
+
+                output.println("Login failed: Incorrect username or password.");
+
+                System.out.println("Failed login attempt: " + username);
+
+                return;
+            }
 
             /*
              * Add the client to our list of online users.

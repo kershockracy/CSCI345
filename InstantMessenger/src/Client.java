@@ -33,6 +33,34 @@ public class Client {
 
             // Send the username to the server.
             output.println(username);
+            // Ask the user to enter a password.
+            System.out.print("Enter password: ");
+            String password = keyboard.nextLine();
+
+            // Send the password to the server.
+            output.println(password);
+
+            /*
+             * Wait for the server to check our login.
+             *
+             * If the username and password are correct,
+             * the server sends a welcome message.
+             *
+             * If the login fails, stop the client program.
+             */
+            String loginResult = input.readLine();
+
+            if (!("Welcome " + username + "!").equals(loginResult)) {
+
+                System.out.println(loginResult == null
+                        ? "Connection closed."
+                        : loginResult);
+
+                return;
+            }
+
+            // Display the successful login message.
+            System.out.println(loginResult);
 
             /*
              * Create a separate thread to listen for messages.
