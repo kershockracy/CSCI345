@@ -86,6 +86,22 @@ public class Server {
 
                 // Keep receiving messages from this client.
                 while ((message = input.readLine()) != null) {
+                    /*
+                     * If the user types "users", display everyone
+                     * currently connected to the server.
+                     *
+                     * onlineClients stores the usernames of
+                     * all connected users.
+                     *
+                     * keySet() gets those usernames.
+                     */
+                    if (message.equalsIgnoreCase("users")) {
+
+                        output.println("Online users: " + onlineClients.keySet());
+
+                        // Skip the normal messaging code.
+                        continue;
+                    }
 
                     /*
                      * A message should look like:
