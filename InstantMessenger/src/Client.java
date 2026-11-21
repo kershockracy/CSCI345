@@ -27,6 +27,13 @@ public class Client {
             // Scanner lets the user type messages in the terminal.
             Scanner keyboard = new Scanner(System.in);
 
+            // Ask the user to enter a username.
+            System.out.print("Enter username: ");
+            String username = keyboard.nextLine();
+
+            // Send the username to the server.
+            output.println(username);
+
             // Keep sending messages until the user types quit.
             while (true) {
 
