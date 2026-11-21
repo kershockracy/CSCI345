@@ -34,6 +34,35 @@ public class Client {
             // Send the username to the server.
             output.println(username);
 
+            /*
+             * Create a separate thread to listen for messages.
+             *
+             * This allows the client to receive messages
+             * even when the user is not typing anything.
+             */
+            Thread receiveThread = new Thread(() -> {
+
+                try {
+                    String incomingMessage;
+
+                    // Keep listening for messages from the server.
+                    while ((incomingMessage = input.readLine()) != null) {
+
+                        // Display each incoming message.
+                        System.out.println("\nServer says: " + incomingMessage);
+                    }
+
+                } catch (IOException e) {
+                    System.out.println("Connection closed.");
+                }
+            });
+
+            // Allow the program to exit when the main thread finishes.
+            receiveThread.setDaemon(true);
+
+            // Start listening for messages.
+            receiveThread.start();
+
             // Keep sending messages until the user types quit.
             while (true) {
 
@@ -49,10 +78,6 @@ public class Client {
                 // Send the typed message to the server.
                 output.println(message);
 
-                // Read the server's reply.
-                String reply = input.readLine();
-
-                System.out.println("Server says: " + reply);
             }
 
         } catch (IOException e) {

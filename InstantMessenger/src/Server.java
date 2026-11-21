@@ -5,8 +5,20 @@ import java.io.IOException;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Server {
+
+    /*
+     * Store the usernames of connected clients.
+     *
+     * Each username is associated with a PrintWriter,
+     * which the server uses to send messages to that client.
+     *
+     * ConcurrentHashMap allows multiple client threads
+     * to safely access this list at the same time.
+     */
+    private static ConcurrentHashMap<String, PrintWriter> onlineClients = new ConcurrentHashMap<>();
 
     public static void main(String[] args) {
 
@@ -16,26 +28,16 @@ public class Server {
 
             System.out.println("Server running on port " + port);
 
-            // Keep the server running and accepting clients.
+            // Keep accepting new clients.
             while (true) {
 
-                // Wait for a new client to connect.
                 Socket client = server.accept();
 
                 System.out.println("Client connected: "
                         + client.getRemoteSocketAddress());
 
-                /*
-                 * Create a separate thread for each client.
-                 *
-                 * This allows multiple clients to connect
-                 * without waiting for another client to finish.
-                 *
-                 * The thread runs the handleClient() method.
-                 */
+                // Give each client its own thread.
                 Thread clientThread = new Thread(() -> handleClient(client));
-
-                // Start the new thread.
                 clientThread.start();
             }
 
@@ -44,47 +46,104 @@ public class Server {
         }
     }
 
-    /*
-     * This method handles communication with one client.
-     *
-     * Each connected client gets its own thread running
-     * this method.
-     */
+    // Handle messages from one connected client.
     private static void handleClient(Socket client) {
 
         try (Socket socket = client;
 
-                // Receive messages from this client.
                 BufferedReader input = new BufferedReader(
                         new InputStreamReader(socket.getInputStream()));
 
-                // Send replies back to this client.
                 PrintWriter output = new PrintWriter(
                         socket.getOutputStream(), true)) {
 
-            // Read the username sent by the client.
+            // Read the username entered by the client.
             String username = input.readLine();
 
-            // Display the username on the server.
+            if (username == null || username.trim().isEmpty()) {
+                output.println("A username is required.");
+                return;
+            }
+
+            username = username.trim();
+
+            /*
+             * Add the client to our list of online users.
+             *
+             * putIfAbsent prevents two clients from
+             * using the same username simultaneously.
+             */
+            if (onlineClients.putIfAbsent(username, output) != null) {
+                output.println("Username already in use.");
+                return;
+            }
+
             System.out.println("User connected: " + username);
+            output.println("Welcome " + username + "!");
 
-            String message;
+            try {
+                String message;
 
-            // Keep receiving messages until the client disconnects.
-            while ((message = input.readLine()) != null) {
+                // Keep receiving messages from this client.
+                while ((message = input.readLine()) != null) {
 
-                // Show which user sent the message.
-                System.out.println(username + ": " + message);
+                    /*
+                     * A message should look like:
+                     *
+                     * bob: Hello Bob!
+                     *
+                     * split() separates the recipient's
+                     * name from the actual message.
+                     */
+                    String[] parts = message.split(":", 2);
 
-                // Reply to the client that sent the message.
-                output.println("Server received: " + message);
+                    if (parts.length != 2) {
+                        output.println("Use: username: message");
+                        continue;
+                    }
+
+                    String recipient = parts[0].trim();
+                    String text = parts[1].trim();
+
+                    if (recipient.isEmpty() || text.isEmpty()) {
+                        output.println("Recipient and message are required.");
+                        continue;
+                    }
+
+                    /*
+                     * Look for the recipient in our
+                     * list of connected users.
+                     */
+                    PrintWriter receiver = onlineClients.get(recipient);
+
+                    if (receiver != null) {
+
+                        // Forward the message to the recipient.
+                        receiver.println(username + ": " + text);
+
+                        // Confirm that the server forwarded it.
+                        output.println("Sent to " + recipient);
+
+                        System.out.println(username + " to "
+                                + recipient + ": " + text);
+
+                    } else {
+
+                        // Tell the sender if the user is not online.
+                        output.println(recipient + " is not online.");
+                    }
+                }
+
+            } finally {
+
+                // Remove the user when the connection ends.
+                onlineClients.remove(username, output);
+
+                System.out.println(username + " disconnected.");
             }
 
         } catch (IOException e) {
             System.out.println("Client error: " + e.getMessage());
         }
-
-        // This appears when the client disconnects.
-        System.out.println("Client disconnected.");
     }
 }
